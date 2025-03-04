@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    // Login
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -31,22 +31,27 @@ class AuthController extends Controller
         $credentials = $validator->validated();
 
         if (Auth::attempt($credentials)) {
-            // Check if subscription is active
-
+            $user = User::find(Auth::id());
+            $subscription = $user->subscription;
+            if (!$subscription || !$subscription->isActive() || !$subscription->isOngoing()) {
+                return response([
+                    'status' => false,
+                    'message' => 'الاشتراك غير مفعل أو منتهي، الرجاء التواصل مع الدعم الفني'
+                ], 401);
+            }
 
             $token = $request->user()->createToken('api-token')->plainTextToken;
-            // $user = User::find(auth()->user()->id);
 
             return response([
                 'status' => true,
                 'message' => 'تم تسجيل الدخول بنجاح',
-                // 'user' => auth()->user(),
+                'user' =>  $user->with('subscription')->first(),
                 'token' => $token,
             ], 200);
         } else {
             return response([
                 'status' => false,
-                'message' => 'الرجاء التأكد من البيانات المدخلة'
+                'message' => 'الرجاء التأكد من البيانات'
             ], 401);
         }
     }
