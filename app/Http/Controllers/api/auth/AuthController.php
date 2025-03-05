@@ -55,4 +55,25 @@ class AuthController extends Controller
             ], 401);
         }
     }
+
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+        return response([
+            'status' => true,
+            'message' => 'تم تسجيل الخروج بنجاح'
+        ], 200);
+    }
+
+
+    // for the current authenticated user
+    public function getUserInfo()
+    {
+        $user = User::find(Auth::id())->with('subscription')->first();
+
+        return response([
+            'status' => true,
+            'user' => $user,
+        ], 200);
+    }
 }
