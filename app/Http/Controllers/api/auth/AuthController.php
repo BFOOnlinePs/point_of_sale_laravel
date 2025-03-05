@@ -31,7 +31,8 @@ class AuthController extends Controller
         $credentials = $validator->validated();
 
         if (Auth::attempt($credentials)) {
-            $user = User::find(Auth::id());
+            $user = User::find(Auth::user()->id);
+            Log::info($user);
             $subscription = $user->subscription;
             if (!$subscription || !$subscription->isActive() || !$subscription->isOngoing()) {
                 return response([
@@ -45,7 +46,7 @@ class AuthController extends Controller
             return response([
                 'status' => true,
                 'message' => 'تم تسجيل الدخول بنجاح',
-                'user' =>  $user->with('subscription')->first(),
+                'user' =>  $user->load('subscription'),
                 'token' => $token,
             ], 200);
         } else {
@@ -58,7 +59,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        $request->user()->currentAccessToken()->delete();
         return response([
             'status' => true,
             'message' => 'تم تسجيل الخروج بنجاح'
