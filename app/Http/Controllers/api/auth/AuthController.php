@@ -31,6 +31,7 @@ class AuthController extends Controller
         $credentials = $validator->validated();
 
         if (Auth::attempt($credentials)) {
+
             $user = User::find(Auth::user()->id);
             Log::info($user);
             $subscription = $user->subscription;
@@ -41,7 +42,9 @@ class AuthController extends Controller
                 ], 401);
             }
 
+            Log::info('user:' . $request->user());
             $token = $request->user()->createToken('api-token')->plainTextToken;
+            // print user by token
 
             return response([
                 'status' => true,
@@ -70,7 +73,9 @@ class AuthController extends Controller
     // for the current authenticated user
     public function getUserInfo()
     {
-        $user = User::find(Auth::id())->with('subscription')->first();
+        $user = User::find(Auth::user()->id);
+        $user = $user->load('subscription');
+
 
         return response([
             'status' => true,
